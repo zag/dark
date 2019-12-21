@@ -2845,6 +2845,76 @@ let addPipeExprAt (pipeId : id) (idx : int) (ast : ast) (s : fluidState) :
   in
   (ast, s, bid)
 
+(*
+ * Attempt #1
+ *)
+let caretTargetFromToken (caretPos:int) (ti:fluidTokenInfo) : caretTarget =
+  match ti.token with
+  | TInteger (id, _) -> {astRef = ARInteger id; offset=(caretPos-ti.startPos)}
+  | _ -> recover "caretTargetFromToken doesn't yet handle this token" ~debug:(show_fluidToken ti.token) {astRef=ARInvalid; offset = 0}
+
+(* XXX(JULIAN): This needs to be implemented for deletion as well, which is very verbose *)
+let insertCharAtCaretTarget (toInsert:char) {astRef; offset} (ast:ast) : (ast,caretTarget) =
+  let toInsert = String.fromChar char in
+  (* XXX(JULIAN): This needs a ref to deal with offset in order to do validation *)
+  let newOffset = ref offset in
+  match astRef with
+  (* XXX(JULIAN): This is going to be very verbose *)
+  | ARInteger id ->
+    ((updateExpr id ast ~f:(fun e ->
+      match e with
+    | (EInteger (id, oldInt)) ->
+      (if isNumber toInsert then
+        let (before, after) = String.splitAt ~index:offset oldInt in
+        let union = before ^ toInsert ^ after in
+        let newInt = union |> coerceStringTo63BitInt in
+        (if oldInt <> newInt then
+        (newOffset := offset + 1;
+        EInteger (id, newInt))
+        else
+        e)
+      else
+        e)
+    | _ -> e
+    )), {astRef; offset= !newOffset})
+  | _ -> recover "TODO: setStringInAstRef doesn't yet handle this astRef" ~debug:(show_astRef astRef) (ast, {astRef; offset})
+
+let insertCharAtToken (toInsert:char) (caretPos:int) (ti:fluidTokenInfo) (ast:ast) : (ast, caretTarget) =
+  let ct = caretTargetFromToken caretPos ti in
+  insertCharAtCaretTarget toInsert ct ast
+
+(*
+ * Attempt #2
+ *)
+let astRefAndStringBeforeAndAfterFromToken (caretPos:int) (ti:fluidTokenInfo) : (caretTarget, string, string) =
+  match ti.token with
+  | TInteger (id, oldInt) ->
+    let offset = (caretPos-ti.startPos) in
+    let (before, after) = String.splitAt ~index:offset oldInt in
+    ({astRef = ARInteger id; offset}, before, after)
+  | _ -> recover "caretTargetFromToken doesn't yet handle this token" ~debug:(show_fluidToken ti.token) {astRef=ARInvalid; offset = 0}
+
+let setStringInAstRef (newString:string) (astRef:astRef) (ast:ast) : ast =
+  match astRef with
+  | ARInteger id ->
+    (updateExpr id ast ~f:(function
+    | EInteger (id, oldStr) ->
+      EInteger (id, newString |> coerceStringTo63BitInt)
+    ))
+  | _ -> recover "setStringInAstRef doesn't yet handle this astRef" ~debug:(show_astRef astRef) ast
+
+let insertString (toInsert:string) (caretPos:int) (ti:fluidTokenInfo) (ast:ast) : (ast, caretTarget) =
+  let ct, stringBefore, stringAfter astRefAndStringBeforeAndAfterFromToken caretPos ti : (caretTarget, string, string)
+  let upToPos = stringBefore ^ toInsert in
+  let replacementStr = upToPos ^ stringAfter in
+  (* XXX(JULIAN): This assumes the string definitely got inserted and it was ok to do so,
+  which in the case of integers, for example, is wrong because the string could
+  be multicharacter and/or not a number *)
+  let newAst = ((setStringInAstRef replacementStr ct.astRef ast), {astRef; offset=String.length upToPos})
+
+(*
+ * Old stuff
+ *)
 
 (* Supports the various different tokens replacing their string contents.
  * Doesn't do movement. *)
