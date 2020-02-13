@@ -709,3 +709,10 @@ let matches (t1 : t) (t2 : t) : bool =
   && toTypeName t1 = toTypeName t2
   && toIndex t1 = toIndex t2
   && t1 <> (* Matches too many things *) TNewline None
+
+let length (t : t) : int =
+    t |> toText |> String.length
+
+let tokensLength (tl : t list) : int =
+    List.map ~f:length tl
+    |> List.sum

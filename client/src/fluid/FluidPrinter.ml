@@ -355,13 +355,26 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
       |> add (TLambdaArrow id)
       |> nest ~indent:2 body
   | EList (id, exprs) ->
+      let lim = 120 in
+      let col = ref 0 in
       let lastIndex = List.length exprs - 1 in
       b
       |> add (TListOpen id)
       |> addIter exprs ~f:(fun i e b ->
-             b
-             |> addNested ~f:(fromExpr e)
-             |> addIf (i <> lastIndex) (TListComma (id, i)))
+          let b' = fromExpr e b in
+          let len = b'.xPos |> Option.withDefault ~default:0 in
+          col := !col + len + 1;
+          let shouldStartNewline =
+            if !col > lim
+            then (col := len; true)
+            else false
+          in
+          b
+          |> addIf shouldStartNewline (TNewline None)
+          |> addIf shouldStartNewline (TIndent 1)
+          |> addNested ~f:(fromExpr e)
+          |> addIf (i <> lastIndex) (TListComma (id, i))
+      )
       |> add (TListClose id)
   | ERecord (id, fields) ->
       if fields = []
