@@ -355,14 +355,16 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
       |> add (TLambdaArrow id)
       |> nest ~indent:2 body
   | EList (id, exprs) ->
-      let lim = 120 in
-      let col = ref 0 in
+      let lim = 125 in
+      (* starting at one because we count [ *)
+      let col = ref 1 in
       let lastIndex = List.length exprs - 1 in
       b
       |> add (TListOpen id)
       |> addIter exprs ~f:(fun i e b ->
           let b' = fromExpr e b in
           let len = b'.xPos |> Option.withDefault ~default:0 in
+          (* adds +1 for the comma *)
           col := !col + len + 1;
           let shouldStartNewline =
             if !col > lim
