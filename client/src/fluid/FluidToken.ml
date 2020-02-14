@@ -337,9 +337,9 @@ let toText (t : t) : string =
   (* We dont want this to be transparent, so have these make their presence
    * known *)
   | TListOpen _ ->
-      "["
+      "[ "
   | TListClose _ ->
-      "]"
+      " ]"
   | TListComma (_, _) ->
       ","
   | TRecordOpen _ ->

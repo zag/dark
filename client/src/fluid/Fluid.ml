@@ -3931,6 +3931,13 @@ let rec updateKey
         if maintainSelection == K.KeepSelection
         then (ast, updateSelectionRange s (getStartOfWordPos ~pos ast ti))
         else (ast, goToStartOfWord ~pos ast ti s)
+    (* At the edges of a list literal *)
+    | Keypress {key = K.Right; _}, _, R (TListOpen _, ti)
+    | Keypress {key = K.Right; _}, _, R (TListClose _, ti) ->
+        (ast, moveToAfter ti s)
+    | Keypress {key = K.Left; _}, L (TListOpen _, ti), _
+    | Keypress {key = K.Left; _}, L (TListClose _, ti), _ ->
+        (ast, moveToStart ti s)
     | Keypress {key = K.Left; _}, L (_, ti), _ ->
         (ast, doLeft ~pos ti s |> acMaybeShow ti)
     | Keypress {key = K.Right; _}, _, R (_, ti) ->
@@ -4497,6 +4504,11 @@ let updateMouseClick (newPos : int) (ast : ast) (s : fluidState) :
         current.startPos
     | Some ({token = TPipe _; _} as current) ->
         current.endPos
+    (* When they point their cursor at the space between the brackets, we assume they want to edit the list. So we place the caret at the first/last elements *)
+    | Some ({token = TListOpen _; _} as current) ->
+        current.endPos
+    | Some ({token = TListClose _; _} as current) ->
+        current.startPos
     | _ ->
         newPos
   in
