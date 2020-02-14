@@ -859,13 +859,13 @@ let run () =
       testCopy
         "copying first expression of pipe adds it to clipboard"
         aPipe
-        (0, 2)
-        "[]" ;
+        (0, 4)
+        "[  ]" ;
       testCopy
         "copying pipe adds it to clipboard"
         aPipe
-        (0, 41)
-        "[]\n|>List::append [5]\n|>List::append [5]\n" ;
+        (0, 47)
+        "[  ]\n|>List::append [ 5 ]\n|>List::append [ 5 ]\n" ;
       ()) ;
   describe "Lists" (fun () ->
       (* NOT WORKING YET
@@ -877,13 +877,13 @@ let run () =
       testCopy
         "copying subset of elements adds subset list expr to clipboard"
         (list [int 123; int 456; int 789])
-        (5, 12)
-        "[456,789]" ;
+        (6, 13)
+        "[ 456,789 ]" ;
       testCut
         "cutting subset of elements adds subset list expr to clipboard and leaves remainder"
         (list [int 123; int 456; int 789])
-        (5, 12)
-        ("[123,~___]", "[456,789]") ;
+        (6, 13)
+        ("[ 123,~___ ]", "[ 456,789 ]") ;
       (* NOT WORKING b/c placing the cursor on either side of a separator
        * acts as though it's on the sub-expression
       t
@@ -899,9 +899,9 @@ let run () =
       testPasteExpr
         "pasting an expression over subset of list expr works"
         (list [int 123; int 456; int 789])
-        (5, 12)
+        (6, 13)
         (int 9000)
-        "[123,9000~]" ;
+        "[ 123,9000~ ]" ;
       ()) ;
   describe "Records" (fun () ->
       testCopy
@@ -940,27 +940,27 @@ let run () =
         "pasting text into empty row works"
         (record [("", b)])
         (4, 4)
-        "SomeKey: [\"val1\", \"val2\" ]"
-        "{\n  SomeKey : [\"val1\",\"val2\"]~\n}" ;
+        "SomeKey: [ \"val1\", \"val2\" ]"
+        "{\n  SomeKey : [ \"val1\",\"val2\" ]~\n}" ;
       testPasteText
         "pasting text into empty row works (alternate spacing)"
         (record [("", b)])
         (4, 4)
         "SomeKey: [ \"val1\", \"val2\" ]"
-        "{\n  SomeKey : [\"val1\",\"val2\"]~\n}" ;
+        "{\n  SomeKey : [ \"val1\",\"val2\" ]~\n}" ;
       testPasteText
         "pasting record text into empty blank"
         b
         (4, 4)
         "{\n  SomeKey: [ \"hi\", \"paul\" ]\n}"
-        "{\n  SomeKey : [\"hi\",\"paul\"]\n  ~*** : ___\n}" ;
+        "{\n  SomeKey : [ \"hi\",\"paul\" ]\n  ~*** : ___\n}" ;
       testPasteText
         "pasting 2 row record text into empty blank"
         b
         (4, 4)
         "{\n  Key: [\"a\", \"b\"]\n  Key2: [\"c\", \"d\"]\n}"
         (* not ideal outcome, but consistent. Could be improved *)
-        "{\n  Key : [\"a\",\"b\"]\n  Key2 : [\"c\",\"d\"]\n  ~*** : ___\n}" ;
+        "{\n  Key : [ \"a\",\"b\" ]\n  Key2 : [ \"c\",\"d\" ]\n  ~*** : ___\n}" ;
       (* TODO: not working, waiting for more caretTarget stuff to land before
        * fixing *)
       (* testPasteText *)
@@ -1004,13 +1004,13 @@ let run () =
         b
         (0, 0)
         "[ 1 , 2 , 3 , 4 ]"
-        "[1,2,3,4]~" ;
+        "[ 1,2,3,4 ]~" ;
       testPasteText
         "pasting a object list makes a record"
         b
         (0, 0)
         "{ \"a\": \n\"b\", \"c\":[\n1\n,\n2], \"d\" : \n4.5 }"
-        "{\n  a : \"b\"\n  c : [1,2]\n  d : 4.5\n}~" ;
+        "{\n  a : \"b\"\n  c : [ 1,2 ]\n  d : 4.5\n}~" ;
       testPasteText
         "pasting text into a string doesn't use the json conversion"
         (str "")

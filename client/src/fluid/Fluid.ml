@@ -1090,7 +1090,7 @@ let rec caretTargetForEndOfExpr' : fluidExpr -> caretTarget = function
       (* Intentionally using the thing that was typed; not the existing expr *)
       {astRef = ARRightPartial id; offset = String.length str}
   | EList (id, _) ->
-      {astRef = ARList (id, LPClose); offset = 1 (* End of the close ] *)}
+      {astRef = ARList (id, LPClose); offset = 2 (* End of the close ] *)}
   | ERecord (id, _) ->
       {astRef = ARRecord (id, RPClose); offset = 1 (* End of the close } *)}
   | EPipe (id, pipeExprs) ->
@@ -1171,7 +1171,7 @@ let rec caretTargetForStartOfExpr' : fluidExpr -> caretTarget = function
   | ERightPartial (id, _, _) ->
       {astRef = ARRightPartial id; offset = 0}
   | EList (id, _) ->
-      {astRef = ARList (id, LPOpen); offset = 0}
+      {astRef = ARList (id, LPOpen); offset = 1}
   | ERecord (id, _) ->
       {astRef = ARRecord (id, RPOpen); offset = 0}
   | EPipe (id, _) ->
@@ -1397,7 +1397,7 @@ let insBlankOrPlaceholderHelper' (ins : string) : (E.t * caretTarget) option =
        if ins = "\""
        then (E.EString (newID, ""), CT.forARStringOpenQuote newID 1)
        else if ins = "["
-       then (E.EList (newID, []), {astRef = ARList (newID, LPOpen); offset = 1})
+       then (E.EList (newID, []), {astRef = ARList (newID, LPOpen); offset = 2})
        else if ins = "{"
        then
          (E.ERecord (newID, []), {astRef = ARRecord (newID, RPOpen); offset = 1})
@@ -4060,8 +4060,8 @@ let rec updateKey
     | InsertText "}", _, R (TRecordClose _, ti) when pos = ti.endPos - 1 ->
         (ast, moveOneRight pos s)
     (* Pressing ] to go over the last ] *)
-    | InsertText "]", _, R (TListClose _, ti) when pos = ti.endPos - 1 ->
-        (ast, moveOneRight pos s)
+    | InsertText "]", _, R (TListClose _, ti) when pos = ti.startPos ->
+        (ast, moveToAfter ti s)
     (* Pressing quote to go over the last quote *)
     | InsertText "\"", _, R (TPatternString _, ti)
     | InsertText "\"", _, R (TString _, ti)

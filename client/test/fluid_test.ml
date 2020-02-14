@@ -1752,8 +1752,8 @@ let run () =
         ~expectsPartial:true
         "ins | starts partial after list"
         aList5
-        (ins "|" 3)
-        "[5] |~" ;
+        (ins "|" 5)
+        "[ 5 ] |~" ;
       t
         ~expectsPartial:true
         "ins + starts partial after fieldname"
@@ -2722,135 +2722,135 @@ let run () =
       t
         "move to the front of pipe on line 1"
         aPipe
-        (key (K.GoToStartOfLine DropSelection) 2)
-        "~[]\n|>List::append [5]\n|>List::append [5]\n" ;
+        (key (K.GoToStartOfLine DropSelection) 4)
+        "~[  ]\n|>List::append [ 5 ]\n|>List::append [ 5 ]\n" ;
       t
         "move to the end of pipe on line 1"
         aPipe
         (key (K.GoToEndOfLine DropSelection) 0)
-        "[]~\n|>List::append [5]\n|>List::append [5]\n" ;
+        "[  ]~\n|>List::append [ 5 ]\n|>List::append [ 5 ]\n" ;
       t
         "move to the front of pipe on line 2"
         aPipe
-        (key (K.GoToStartOfLine DropSelection) 8)
-        "[]\n|>~List::append [5]\n|>List::append [5]\n" ;
+        (key (K.GoToStartOfLine DropSelection) 10)
+        "[  ]\n|>~List::append [ 5 ]\n|>List::append [ 5 ]\n" ;
       t
         "move to the end of pipe on line 2"
         aPipe
-        (key (K.GoToEndOfLine DropSelection) 5)
-        "[]\n|>List::append [5]~\n|>List::append [5]\n" ;
+        (key (K.GoToEndOfLine DropSelection) 7)
+        "[  ]\n|>List::append [ 5 ]~\n|>List::append [ 5 ]\n" ;
       t
         "move to the front of pipe on line 3"
         aPipe
-        (key (K.GoToStartOfLine DropSelection) 40)
-        "[]\n|>List::append [5]\n|>~List::append [5]\n" ;
+        (key (K.GoToStartOfLine DropSelection) 46)
+        "[  ]\n|>List::append [ 5 ]\n|>~List::append [ 5 ]\n" ;
       t
         "move to the end of pipe on line 3"
         aPipe
-        (key (K.GoToEndOfLine DropSelection) 24)
-        "[]\n|>List::append [5]\n|>List::append [5]~\n" ;
+        (key (K.GoToEndOfLine DropSelection) 28)
+        "[  ]\n|>List::append [ 5 ]\n|>List::append [ 5 ]~\n" ;
       t
         "pipes appear on new lines"
         aPipe
         render
-        "~[]\n|>List::append [5]\n|>List::append [5]\n" ;
+        "~[  ]\n|>List::append [ 5 ]\n|>List::append [ 5 ]\n" ;
       t
         "nested pipes will indent"
         aNestedPipe
         render
-        "~[]\n|>List::append [5]\n               |>List::append [6]\n" ;
+        "~[  ]\n|>List::append [ 5 ]\n               |>List::append [ 6 ]\n" ;
       t
         "backspacing a pipe's first pipe works"
         aLongPipe
-        (bs 5)
-        "[]~\n|>List::append [3]\n|>List::append [4]\n|>List::append [5]\n" ;
+        (bs 7)
+        "[  ]~\n|>List::append [ 3 ]\n|>List::append [ 4 ]\n|>List::append [ 5 ]\n" ;
       t
         "deleting a pipe's first pipe works"
         aLongPipe
-        (del 3)
+        (del 5)
         (* TODO: fix caret affinity https://www.notion.so/darklang/Keyboard-and-Input-Handling-44eeedc4953846159e96af1e979004ad *)
-        "[]~\n|>List::append [3]\n|>List::append [4]\n|>List::append [5]\n" ;
+        "[  ]~\n|>List::append [ 3 ]\n|>List::append [ 4 ]\n|>List::append [ 5 ]\n" ;
       t
         "backspacing a pipe's second pipe works"
         aLongPipe
-        (bs 24)
-        "[]\n|>List::append [2]~\n|>List::append [4]\n|>List::append [5]\n" ;
+        (bs 28)
+        "[  ]\n|>List::append [ 2 ]~\n|>List::append [ 4 ]\n|>List::append [ 5 ]\n" ;
       t
         "deleting a pipe's second pipe works"
         aLongPipe
-        (del 22)
+        (del 26)
         (* TODO: fix caret affinity https://www.notion.so/darklang/Keyboard-and-Input-Handling-44eeedc4953846159e96af1e979004ad *)
-        "[]\n|>List::append [2]~\n|>List::append [4]\n|>List::append [5]\n" ;
+        "[  ]\n|>List::append [ 2 ]~\n|>List::append [ 4 ]\n|>List::append [ 5 ]\n" ;
       t
         "backspacing a pipe's third pipe works"
         aLongPipe
-        (bs 43)
-        "[]\n|>List::append [2]\n|>List::append [3]~\n|>List::append [5]\n" ;
+        (bs 49)
+        "[  ]\n|>List::append [ 2 ]\n|>List::append [ 3 ]~\n|>List::append [ 5 ]\n" ;
       t
         "deleting a pipe's third pipe works"
         aLongPipe
-        (del 41)
+        (del 47)
         (* TODO: fix caret affinity https://www.notion.so/darklang/Keyboard-and-Input-Handling-44eeedc4953846159e96af1e979004ad *)
-        "[]\n|>List::append [2]\n|>List::append [3]~\n|>List::append [5]\n" ;
+        "[  ]\n|>List::append [ 2 ]\n|>List::append [ 3 ]~\n|>List::append [ 5 ]\n" ;
       t
         "backspacing a pipe's last pipe works"
         aLongPipe
-        (bs 62)
-        "[]\n|>List::append [2]\n|>List::append [3]\n|>List::append [4]~\n" ;
+        (bs 70)
+        "[  ]\n|>List::append [ 2 ]\n|>List::append [ 3 ]\n|>List::append [ 4 ]~\n" ;
       t
         "deleting a pipe's last pipe works"
         aLongPipe
-        (del 60)
-        "[]\n|>List::append [2]\n|>List::append [3]\n|>List::append [4]~\n" ;
+        (del 68)
+        "[  ]\n|>List::append [ 2 ]\n|>List::append [ 3 ]\n|>List::append [ 4 ]~\n" ;
       t
         "backspacing a pipe's first pipe that isn't in the first column works"
         aPipeInsideIf
-        (bs 21)
-        "if ___\nthen\n  []~\n  |>List::append [3]\n  |>List::append [4]\n  |>List::append [5]\nelse\n  ___" ;
+        (bs 23)
+        "if ___\nthen\n  [  ]~\n  |>List::append [ 3 ]\n  |>List::append [ 4 ]\n  |>List::append [ 5 ]\nelse\n  ___" ;
       t
         "deleting a pipe's first pipe that isn't in the first column works"
         aPipeInsideIf
-        (del 19)
+        (del 21)
         (* TODO: fix caret affinity https://www.notion.so/darklang/Keyboard-and-Input-Handling-44eeedc4953846159e96af1e979004ad *)
-        "if ___\nthen\n  []~\n  |>List::append [3]\n  |>List::append [4]\n  |>List::append [5]\nelse\n  ___" ;
+        "if ___\nthen\n  [  ]~\n  |>List::append [ 3 ]\n  |>List::append [ 4 ]\n  |>List::append [ 5 ]\nelse\n  ___" ;
       t
         "backspacing a pipe's second pipe that isn't in the first column works"
         aPipeInsideIf
-        (bs 42)
-        "if ___\nthen\n  []\n  |>List::append [2]~\n  |>List::append [4]\n  |>List::append [5]\nelse\n  ___" ;
+        (bs 46)
+        "if ___\nthen\n  [  ]\n  |>List::append [ 2 ]~\n  |>List::append [ 4 ]\n  |>List::append [ 5 ]\nelse\n  ___" ;
       t
         "deleting a pipe's second pipe that isn't in the first column works"
         aPipeInsideIf
-        (del 40)
+        (del 44)
         (* TODO: fix caret affinity https://www.notion.so/darklang/Keyboard-and-Input-Handling-44eeedc4953846159e96af1e979004ad *)
-        "if ___\nthen\n  []\n  |>List::append [2]~\n  |>List::append [4]\n  |>List::append [5]\nelse\n  ___" ;
+        "if ___\nthen\n  [  ]\n  |>List::append [ 2 ]~\n  |>List::append [ 4 ]\n  |>List::append [ 5 ]\nelse\n  ___" ;
       t
         "backspacing a pipe's third pipe that isn't in the first column works"
         aPipeInsideIf
-        (bs 63)
-        "if ___\nthen\n  []\n  |>List::append [2]\n  |>List::append [3]~\n  |>List::append [5]\nelse\n  ___" ;
+        (bs 69)
+        "if ___\nthen\n  [  ]\n  |>List::append [ 2 ]\n  |>List::append [ 3 ]~\n  |>List::append [ 5 ]\nelse\n  ___" ;
       t
         "deleting a pipe's third pipe that isn't in the first column works"
         aPipeInsideIf
-        (del 61)
+        (del 67)
         (* TODO: fix caret affinity https://www.notion.so/darklang/Keyboard-and-Input-Handling-44eeedc4953846159e96af1e979004ad *)
-        "if ___\nthen\n  []\n  |>List::append [2]\n  |>List::append [3]~\n  |>List::append [5]\nelse\n  ___" ;
+        "if ___\nthen\n  [  ]\n  |>List::append [ 2 ]\n  |>List::append [ 3 ]~\n  |>List::append [ 5 ]\nelse\n  ___" ;
       t
         "backspacing a pipe's fourth pipe that isn't in the first column works"
         aPipeInsideIf
-        (bs 84)
-        "if ___\nthen\n  []\n  |>List::append [2]\n  |>List::append [3]\n  |>List::append [4]~\nelse\n  ___" ;
+        (bs 92)
+        "if ___\nthen\n  [  ]\n  |>List::append [ 2 ]\n  |>List::append [ 3 ]\n  |>List::append [ 4 ]~\nelse\n  ___" ;
       t
         "deleting a pipe's fourth pipe that isn't in the first column works"
         aPipeInsideIf
-        (del 82)
-        "if ___\nthen\n  []\n  |>List::append [2]\n  |>List::append [3]\n  |>List::append [4]~\nelse\n  ___" ;
+        (del 90)
+        "if ___\nthen\n  [  ]\n  |>List::append [ 2 ]\n  |>List::append [ 3 ]\n  |>List::append [ 4 ]~\nelse\n  ___" ;
       t
         ~expectsPartial:true
         "backspacing a pipe's first fn works"
         aLongPipe
-        (bs 17)
-        "[]\n|>List::appen~@ [2]\n|>List::append [3]\n|>List::append [4]\n|>List::append [5]\n" ;
+        (bs 19)
+        "[  ]\n|>List::appen~@ [ 2 ]\n|>List::append [ 3 ]\n|>List::append [ 4 ]\n|>List::append [ 5 ]\n" ;
       t
         ~expectsPartial:true
         "backspacing a pipe's first binop works"
@@ -2875,55 +2875,55 @@ let run () =
       t
         "enter at the end of a pipe expr creates a new entry"
         aPipe
-        (enter 21)
-        "[]\n|>List::append [5]\n|>~___\n|>List::append [5]\n" ;
+        (enter 25)
+        "[  ]\n|>List::append [ 5 ]\n|>~___\n|>List::append [ 5 ]\n" ;
       t
         "enter at the end of the opening expr creates a new entry"
         aPipe
-        (enter 2)
-        "[]\n|>~___\n|>List::append [5]\n|>List::append [5]\n" ;
+        (enter 4)
+        "[  ]\n|>~___\n|>List::append [ 5 ]\n|>List::append [ 5 ]\n" ;
       t
         "enter at the start of a line creates a new entry"
         aPipe
-        (enter 3)
-        "[]\n|>___\n~|>List::append [5]\n|>List::append [5]\n" ;
+        (enter 5)
+        "[  ]\n|>___\n~|>List::append [ 5 ]\n|>List::append [ 5 ]\n" ;
       t
         "enter at start of blank (within pipe) creates a new entry"
         aPipe
-        (enter 5)
-        "[]\n|>___\n|>~List::append [5]\n|>List::append [5]\n" ;
+        (enter 7)
+        "[  ]\n|>___\n|>~List::append [ 5 ]\n|>List::append [ 5 ]\n" ;
       t
         "enter at the end of the last expr creates a new entry"
         aPipe
-        (enter 40)
-        "[]\n|>List::append [5]\n|>List::append [5]\n|>~___\n" ;
+        (enter 46)
+        "[  ]\n|>List::append [ 5 ]\n|>List::append [ 5 ]\n|>~___\n" ;
       t
         "enter at the end of the last nested expr creates a new entry"
         aNestedPipe
-        (enter 55)
-        "[]\n|>List::append [5]\n               |>List::append [6]\n               |>~___\n" ;
+        (enter 61)
+        "[  ]\n|>List::append [ 5 ]\n               |>List::append [ 6 ]\n               |>~___\n" ;
       t
         "enter at the end of pipe expression with line below creates a new entry"
         (let' "a" (pipe (list []) [listFn [aList5]]) five)
-        (enter ~wrap:false 37)
+        (enter ~wrap:false 41)
         (* indent counting is all weird with wrapper *)
-        "let a = []\n        |>List::append [5]\n        |>~___\n5" ;
+        "let a = [  ]\n        |>List::append [ 5 ]\n        |>~___\n5" ;
       t
         "enter at the beginning of expression after pipe creates let, not pipe"
         (let' "a" (pipe (list []) [listFn [aList5]]) five)
-        (enter ~wrap:false 38)
+        (enter ~wrap:false 42)
         (* indent counting is all weird with wrapper *)
-        "let a = []\n        |>List::append [5]\nlet *** = ___\n~5" ;
+        "let a = [  ]\n        |>List::append [ 5 ]\nlet *** = ___\n~5" ;
       t
         "inserting a pipe into another pipe gives a single pipe1"
         (pipe five [listFn [rightPartial "|>" aList5]])
-        (enter 23)
-        "5\n|>List::append [5]\n|>~___\n" ;
+        (enter 25)
+        "5\n|>List::append [ 5 ]\n|>~___\n" ;
       t
         "inserting a pipe into another pipe gives a single pipe2"
         (pipe five [listFn [aList5]])
-        (key K.ShiftEnter 19)
-        "5\n|>List::append [5]\n|>~___\n" ;
+        (key K.ShiftEnter 21)
+        "5\n|>List::append [ 5 ]\n|>~___\n" ;
       t
         "inserting a pipe into another pipe gives a single pipe3"
         five
@@ -2942,13 +2942,13 @@ let run () =
       t
         "ctrl+left moves to front of thread "
         aPipe
-        (ctrlLeft 19)
-        "[]\n|>~List::append [5]\n|>List::append [5]\n" ;
+        (ctrlLeft 21)
+        "[  ]\n|>~List::append [ 5 ]\n|>List::append [ 5 ]\n" ;
       t
         "ctrl+right moves to end of next thread "
         aPipe
-        (ctrlRight 20)
-        "[]\n|>List::append [5]\n|>List::append~ [5]\n" ;
+        (ctrlRight 23)
+        "[  ]\n|>List::append [ 5 ]\n|>List::append~ [ 5 ]\n" ;
       t
         "bsing a blank pipe after a piped 1-arg function deletes all"
         (pipe aList5 [fn "List::length" [pipeTarget]; b])
@@ -3057,107 +3057,111 @@ let run () =
         "if 5\nthen\n  6~\nelse\n  7" ;
       ()) ;
   describe "Lists" (fun () ->
-      t "create list" b (ins "[" 0) "[~]" ;
-      t "insert into empty list inserts" emptyList (ins "5" 1) "[5~]" ;
-      t "inserting before the list does nothing" emptyList (ins "5" 0) "~[]" ;
-      t "insert space into multi list" multi (key K.Space 6) "[56,78~]" ;
-      t "insert space into single list" single (key K.Space 3) "[56~]" ;
-      t "insert into existing list item" single (ins "4" 1) "[4~56]" ;
+      t "create list" b (ins "[" 0) "[ ~ ]" ;
+      t "insert into empty list inserts" emptyList (ins "5" 2) "[ 5~ ]" ;
+      t "inserting before the list does nothing" emptyList (ins "5" 0) "~[  ]" ;
+      t "insert space into multi list" multi (key K.Space 7) "[ 56,78~ ]" ;
+      t "insert space into single list" single (key K.Space 4) "[ 56~ ]" ;
+      t "insert into existing list item" single (ins "4" 2) "[ 4~56 ]" ;
       t
         "insert separator before item creates blank"
         single
-        (ins "," 1)
-        "[~___,56]" ;
+        (ins "," 2)
+        "[ ~___,56 ]" ;
       t
         "insert separator after item creates blank"
         single
-        (ins "," 3)
-        "[56,~___]" ;
+        (ins "," 4)
+        "[ 56,~___ ]" ;
       t
         "insert separator between items creates blank"
         multi
-        (ins "," 3)
-        "[56,~___,78]" ;
+        (ins "," 4)
+        "[ 56,~___,78 ]" ;
       (* t "insert separator mid integer makes two items" single (ins ',' 2) *)
       (*   ("[5,6]", 3) ; *)
       (* TODO: when on a separator in a nested list, pressing comma makes an entry outside the list. *)
       t
         "insert separator mid string does nothing special "
         withStr
-        (ins "," 3)
-        "[\"a,~b\"]" ;
+        (ins "," 4)
+        "[ \"a,~b\" ]" ;
       t
         "backspacing open bracket of empty list dels list"
         emptyList
-        (bs 1)
+        (bs 2)
         "~___" ;
       t
         "backspacing close bracket of empty list moves inside list"
         emptyList
-        (bs 2)
-        "[~]" ;
+        (bs 4)
+        "[ ~ ]" ;
       t "deleting open bracket of empty list dels list" emptyList (del 0) "~___" ;
-      t "close bracket at end of list is swallowed" emptyList (ins "]" 1) "[]~" ;
+      t
+        "close bracket at end of list is swallowed"
+        emptyList
+        (ins "]" 2)
+        "[  ]~" ;
       t
         "bs on first separator between items dels item after separator"
         multi
-        (bs 4)
-        "[56~]" ;
+        (bs 5)
+        "[ 56~ ]" ;
       t
         "del before first separator between items dels item after separator"
         multi
-        (del 3)
-        "[56~]" ;
+        (del 4)
+        "[ 56~ ]" ;
       t
         "bs on middle separator between items dels item after separator"
         longList
-        (bs 10)
-        "[56,78,56~,56,78]" ;
+        (bs 11)
+        "[ 56,78,56~,56,78 ]" ;
       t
         "del before middle separator between items dels item after separator"
         longList
-        (del 9)
-        "[56,78,56~,56,78]" ;
+        (del 10)
+        "[ 56,78,56~,56,78 ]" ;
       t
         "bs on middle separator between items dels blank after separator"
         listWithBlank
-        (bs 7)
-        "[56,78~,56]" ;
+        (bs 8)
+        "[ 56,78~,56 ]" ;
       t
         "del before middle separator between items dels blank after separator"
         listWithBlank
-        (del 6)
-        "[56,78~,56]" ;
+        (del 7)
+        "[ 56,78~,56 ]" ;
       t
         "bs on last separator between a blank and item dels item after separator"
         listWithBlank
-        (bs 11)
-        "[56,78,~___]" ;
+        (bs 12)
+        "[ 56,78,~___ ]" ;
       t
         "del before last separator between a blank and item dels item after separator"
         listWithBlank
-        (del 10)
-        "[56,78,~___]" ;
+        (del 11)
+        "[ 56,78,~___ ]" ;
       t
         "bs on separator between string items dels item after separator"
         multiWithStrs
-        (bs 6)
-        "[\"ab\"~,\"ef\"]" ;
+        (bs 7)
+        "[ \"ab\"~,\"ef\" ]" ;
       t
         "del before separator between string items dels item after separator"
         multiWithStrs
-        (del 5)
-        "[\"ab\"~,\"ef\"]" ;
+        (del 6)
+        "[ \"ab\"~,\"ef\" ]" ;
       t
         "ctrl+left at the beg of list item moves to beg of next list item"
         longList
-        (ctrlLeft 10)
-        "[56,78,~56,78,56,78]" ;
+        (ctrlLeft 11)
+        "[ 56,78,~56,78,56,78 ]" ;
       t
         "ctrl+right at the end of list item moves to end of next list item"
         longList
-        (ctrlRight 12)
-        "[56,78,56,78,56~,78]" ;
+        (ctrlRight 13)
+        "[ 56,78,56,78,56~,78 ]" ;
       ()) ;
   describe "Record" (fun () ->
       t "create record" b (ins "{" 0) "{~}" ;
@@ -3180,8 +3184,8 @@ let run () =
       t
         "inserting text in nested record gets correct position"
         listWithRecord
-        (ins "f" 2 ~wrap:false)
-        "[{\n   f~ : ___\n }]" ;
+        (ins "f" 3 ~wrap:false)
+        "[ {\n    f~ : ___\n  } ]" ;
       t
         "inserting space in empty record field does nothing"
         emptyRowRecord
@@ -3447,8 +3451,8 @@ let run () =
       t
         "shift enter in pipe autocompletes and creates pipe"
         (pipe (list []) [partial "appe" b])
-        (key ~wrap:false K.ShiftEnter 9)
-        "[]\n|>List::append ___________\n|>~___\n" ;
+        (key ~wrap:false K.ShiftEnter 11)
+        "[  ]\n|>List::append ___________\n|>~___\n" ;
       t "autocomplete for Just" (partial "Just" b) (enter 4) "Just ~___" ;
       t "autocomplete for Ok" (partial "Ok" b) (enter 2) "Ok ~___" ;
       t "autocomplete for Nothing" (partial "Nothing" b) (enter 7) "Nothing~" ;
