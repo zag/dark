@@ -32,6 +32,10 @@ module Builder = struct
 
   let empty = {tokens = []; xPos = Some 0; indent = 0}
 
+  let lineLimit : int = 120
+
+  let literalLimit : int = 40
+
   let add (token : fluidToken) (b : t) : t =
     let tokenLength = token |> T.toText |> String.length in
     let newTokens, xPos =
@@ -185,7 +189,7 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
         |> ( + ) (* separators, including at the front *) (List.length args)
         |> ( + ) (Option.withDefault ~default:0 b.xPos)
       in
-      let tooLong = length > 120 in
+      let tooLong = length > lineLimit in
       let needsNewlineBreak =
         (* newlines aren't disruptive in the last argument *)
         args
@@ -235,7 +239,7 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
       |> addNewlineIfNeeded (Some (E.toID next, id, None))
       |> addNested ~f:(fromExpr next)
   | EString (id, str) ->
-      let size = 40 in
+      let size = literalLimit in
       let strings =
         if String.length str > size then String.segment ~size str else [str]
       in
@@ -355,29 +359,27 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
       |> add (TLambdaArrow id)
       |> nest ~indent:2 body
   | EList (id, exprs) ->
-      let lim = 125 in
-      (* starting at one because we count [ *)
-      let col = ref 1 in
       let lastIndex = List.length exprs - 1 in
+      (* keeps track on indent *)
+      let ind = ref 0 in
       b
       |> add (TListOpen id)
-      |> addIter exprs ~f:(fun i e b ->
-             let b' = fromExpr e b in
-             let len = b'.xPos |> Option.withDefault ~default:0 in
-             (* adds +1 for the comma *)
-             col := !col + len + 1 ;
-             let shouldStartNewline =
-               if !col > lim
-               then (
-                 col := len ;
-                 true )
-               else false
+      |> addIter exprs ~f:(fun i e b' ->
+             let len =
+               (fromExpr e b').xPos
+               (* adds +1 for the comma *)
+               |> Option.map ~f:(fun x -> x + 1)
+               |> Option.withDefault ~default:0
              in
-             b
-             |> addIf shouldStartNewline (TNewline None)
-             |> addIf shouldStartNewline (TIndent 1)
-             |> addNested ~f:(fromExpr e)
-             |> addIf (i <> lastIndex) (TListComma (id, i)))
+             let isOverLimit = len > literalLimit in
+             b'
+             |> indentBy ~indent:!ind ~f:(fun b' ->
+                    (* If the next token will be on a newline, then mark its indents *)
+                    ind := if isOverLimit then 2 else 0 ;
+                    b'
+                    |> addNested ~f:(fromExpr e)
+                    |> addIf (i <> lastIndex) (TListComma (id, i))
+                    |> addIf isOverLimit (TNewline None)))
       |> add (TListClose id)
   | ERecord (id, fields) ->
       if fields = []
