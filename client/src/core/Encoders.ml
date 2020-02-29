@@ -801,7 +801,9 @@ let handlerProp (p : Types.handlerProp) : Js.Json.t =
 let editorSettings (es : Types.editorSettings) : Js.Json.t =
   object_
     [ ("runTimers", bool es.runTimers)
-    ; ("showFluidDebugger", bool es.showFluidDebugger) ]
+    ; ("showFluidDebugger", bool es.showFluidDebugger)
+    ; ("indentSize", int es.indentSize)
+    ; ("maxLineLength", int es.maxLineLength) ]
 
 
 let savedUserSettings (se : Types.savedUserSettings) : Js.Json.t =

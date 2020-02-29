@@ -112,7 +112,16 @@ let init (encodedParamString : string) (location : Web.Location.location) =
     ; tlid = None
     ; timestamp = timeStamp }
   in
-  let m = {m with fluidState = Fluid.initAC m.fluidState m} in
+  let m =
+    let fluidState =
+      { m.fluidState with
+        settings =
+          { indentSize = m.editorSettings.indentSize
+          ; maxLineLength = m.editorSettings.maxLineLength
+          ; maxElementLength = m.editorSettings.maxLineLength / 2 } }
+    in
+    {m with fluidState = Fluid.initAC fluidState m}
+  in
   if Url.isIntegrationTest ()
   then (m, Cmd.batch [API.integration m m.canvasName; API.loadPackages m])
   else

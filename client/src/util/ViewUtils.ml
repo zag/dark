@@ -58,9 +58,10 @@ let createVS (m : model) (tl : toplevel) : viewState =
     match tl with TLHandler _ -> TD.get ~tlid m.handlerProps | _ -> None
   in
   let traceID = Analysis.getSelectedTraceID m tlid in
+  let fluidSettings = m.fluidState.settings in
   let tokenSplits =
     TL.getAST tl
-    |> Option.map ~f:FluidPrinter.tokenizeWithSplits
+    |> Option.map ~f:(FluidPrinter.tokenizeWithSplits fluidSettings)
     |> Option.withDefault ~default:[]
   in
   { tl

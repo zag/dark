@@ -114,7 +114,7 @@ let longLines : FuzzTest.t =
   ; check =
       (fun ~testcase:_ ~newAST _ ->
         let allTokens =
-          FluidPrinter.tokenizeWithSplits newAST
+          FluidPrinter.tokenizeWithSplits Defaults.defaultFluidSettings newAST
           |> List.map ~f:(fun (s : FluidPrinter.split) -> s.tokens)
           |> List.concat
         in

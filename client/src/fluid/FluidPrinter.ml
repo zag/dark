@@ -50,12 +50,6 @@ module Builder = struct
   (** id is the id of the first token in the builder or None if the builder is empty. *)
   let id (b : t) : id option = List.last b.tokens |> Option.map ~f:T.tid
 
-  let lineLimit = 120
-
-  let strLimit = 40
-
-  let listLimit = 60
-
   let add (token : fluidToken) (b : t) : t =
     let tokenLength = token |> T.toText |> String.length in
     let newTokens, xPos =
@@ -101,7 +95,7 @@ module Builder = struct
 
 
   (** [indentBy ~ident ~f b] calls [f] with a modified [b] having additional
-    * indentation by [indent] characters (that is, b.indent + ~indent), then
+    * indent by [indent] characters (that is, b.indent + ~indent), then
     * returns the result of that [f b] invocation with the original indent of
     * [b] restored. *)
   let indentBy ~(indent : int) ~(f : t -> t) (b : t) : t =
@@ -159,7 +153,9 @@ let rec patternToToken (p : FluidPattern.t) ~(idx : int) : fluidToken list =
       [TPatternBlank (mid, id, idx)]
 
 
-let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
+let rec toTokens' (settings : fluidSettings) (e : E.t) (b : Builder.t) :
+    Builder.t =
+  let toTokens' = toTokens' settings in
   let open Builder in
   let ghostPartial id newName oldName =
     let ghostSuffix = String.dropLeft ~count:(String.length newName) oldName in
@@ -215,7 +211,7 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
         |> ( + ) (* separators, including at the front *) (List.length args)
         |> ( + ) (Option.withDefault ~default:0 b.xPos)
       in
-      let tooLong = length > lineLimit in
+      let tooLong = length > settings.maxLineLength in
       let needsNewlineBreak =
         (* newlines aren't disruptive in the last argument *)
         args
@@ -234,7 +230,10 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
            then
              b
              |> addNewlineIfNeeded (Some (id, id, Some (offset + i)))
-             |> nest ~indent:2 ~placeholderFor:(Some (id, name, offset + i)) e
+             |> nest
+                  ~indent:settings.indentSize
+                  ~placeholderFor:(Some (id, name, offset + i))
+                  e
            else
              b
              |> add (TSep (E.toID e))
@@ -266,8 +265,8 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
       |> addNested ~f:(toTokens' next)
   | EString (id, str) ->
       let strings =
-        if String.length str > strLimit
-        then String.segment ~size:strLimit str
+        if String.length str > settings.maxElementLength
+        then String.segment ~size:settings.maxElementLength str
         else [str]
       in
       ( match strings with
@@ -280,14 +279,20 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
         | ending :: revrest ->
             b
             |> addNested ~f:(fun b ->
-                   let endingOffset = strLimit * (List.length revrest + 1) in
+                   let endingOffset =
+                     settings.maxElementLength * (List.length revrest + 1)
+                   in
                    b
                    |> add (TStringMLStart (id, starting, 0, str))
                    |> add (TNewline None)
                    |> addIter (List.reverse revrest) ~f:(fun i s b ->
                           b
                           |> add
-                               (TStringMLMiddle (id, s, strLimit * (i + 1), str))
+                               (TStringMLMiddle
+                                  ( id
+                                  , s
+                                  , settings.maxElementLength * (i + 1)
+                                  , str ))
                           |> add (TNewline None))
                    |> add (TStringMLEnd (id, ending, endingOffset, str))) ) )
   | EIf (id, cond, if', else') ->
@@ -297,11 +302,11 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
       |> addNewlineIfNeeded None
       |> add (TIfThenKeyword id)
       |> addNewlineIfNeeded (Some (E.toID if', id, None))
-      |> nest ~indent:2 if'
+      |> nest ~indent:settings.indentSize if'
       |> addNewlineIfNeeded None
       |> add (TIfElseKeyword id)
       |> add (TNewline (Some (E.toID else', id, None)))
-      |> nest ~indent:2 else'
+      |> nest ~indent:settings.indentSize else'
   | EBinOp (id, op, lexpr, rexpr, _ster) ->
       let start b =
         match lexpr with
@@ -332,7 +337,10 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
       |> add (TPartial (id, newName))
       |> addMany ghost
       |> add (TSep id)
-      |> nest ~indent:2 ~placeholderFor:(Some (id, oldName, 1)) rexpr
+      |> nest
+           ~indent:settings.indentSize
+           ~placeholderFor:(Some (id, oldName, 1))
+           rexpr
   | EFnCall (id, fnName, args, ster) ->
       let displayName = FluidUtil.fnDisplayName fnName in
       let versionDisplayName = FluidUtil.versionDisplayName fnName in
@@ -385,7 +393,7 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
              |> addIf (not (isLast i)) (TLambdaComma (id, i))
              |> addIf (not (isLast i)) (TSep aid))
       |> add (TLambdaArrow id)
-      |> nest ~indent:2 body
+      |> nest ~indent:settings.indentSize body
   | EList (id, exprs) ->
       (*
          With each iteration of the list, we calculate the new line length, if we were to add this new item. If the new line length exceeds the limit, then we add a new line token and an indent by 1 first, before adding the tokenized item to the builder.
@@ -402,7 +410,9 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
                |> Option.withDefault ~default:commaWidth
              in
              (* Even if first element overflows, don't put it in a new line *)
-             let isOverLimit = i > 0 && currentLineLength > listLimit in
+             let isOverLimit =
+               i > 0 && currentLineLength > settings.maxElementLength
+             in
              (* Indent after newlines to match the '[ ' *)
              let indent = if isOverLimit then 1 else 0 in
              b'
@@ -418,7 +428,7 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
       else
         b
         |> add (TRecordOpen id)
-        |> indentBy ~indent:2 ~f:(fun b ->
+        |> indentBy ~indent:settings.indentSize ~f:(fun b ->
                addIter fields b ~f:(fun i (fieldName, expr) b ->
                    let exprID = E.toID expr in
                    b
@@ -454,7 +464,7 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
       b
       |> add (TMatchKeyword id)
       |> addNested ~f:(toTokens' mexpr)
-      |> indentBy ~indent:2 ~f:(fun b ->
+      |> indentBy ~indent:settings.indentSize ~f:(fun b ->
              b
              |> addIter pairs ~f:(fun i (pattern, expr) b ->
                     b
@@ -479,7 +489,7 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
        * stream. The condition expression and enabled case go to the split
        * secondary stream. *)
       b
-      |> nest ~indent:2 disabled
+      |> nest ~indent:settings.indentSize disabled
       |> split ~f:(fun b ->
              b
              |> add (TFlagWhenKeyword id)
@@ -487,7 +497,7 @@ let rec toTokens' (e : E.t) (b : Builder.t) : Builder.t =
              |> addNewlineIfNeeded None
              |> add (TFlagEnabledKeyword id)
              |> addNewlineIfNeeded (Some (E.toID enabled, id, None))
-             |> nest ~indent:2 enabled)
+             |> nest ~indent:settings.indentSize enabled)
 
 
 let infoize tokens : tokenInfo list =
@@ -531,8 +541,9 @@ let tidy (tokens : fluidToken list) : fluidToken list =
   *
   * Each split contains the id of its first expression, for convenience in
   * linking the split back to the place it was split from the main builder. *)
-let tokenizeWithSplits (e : FluidExpression.t) : split list =
-  let b = Builder.empty |> toTokens' e in
+let tokenizeWithSplits (settings : fluidSettings) (e : FluidExpression.t) :
+    split list =
+  let b = Builder.empty |> toTokens' settings e in
   List.filterMap (b :: b.splits) ~f:(fun b ->
       let tokens = b |> Builder.asTokens |> tidy |> validateTokens |> infoize in
       b |> Builder.id |> Option.map ~f:(fun id -> {id; tokens}))
@@ -544,8 +555,10 @@ let tokenizeWithSplits (e : FluidExpression.t) : split list =
   * This is mostly a helper for code that was written pre-splits.
   * If you need several splits or to work with split ids, use [tokenizeWithSplits e]
   * directly instead. *)
-let tokensForSplit (e : FluidExpression.t) ~(index : int) : tokenInfo list =
-  tokenizeWithSplits e
+let tokensForSplit
+    (settings : fluidSettings) (e : FluidExpression.t) ~(index : int) :
+    tokenInfo list =
+  tokenizeWithSplits settings e
   |> List.getAt ~index
   |> Option.map ~f:(fun p -> p.tokens)
   |> recoverOpt
@@ -559,18 +572,18 @@ let tokensToString (tis : tokenInfo list) : string =
 
 let eToTestString ?(index = 0) (e : E.t) : string =
   e
-  |> tokensForSplit ~index
+  |> tokensForSplit Defaults.defaultFluidSettings ~index
   |> List.map ~f:(fun ti -> T.toTestText ti.token)
   |> String.join ~sep:""
 
 
 let eToHumanString ?(index = 0) (e : E.t) : string =
-  e |> tokensForSplit ~index |> tokensToString
+  e |> tokensForSplit Defaults.defaultFluidSettings ~index |> tokensToString
 
 
 let eToStructure ?(includeIDs = false) ?(index = 0) (e : E.t) : string =
   e
-  |> tokensForSplit ~index
+  |> tokensForSplit Defaults.defaultFluidSettings ~index
   |> List.map ~f:(fun ti ->
          "<"
          ^ T.toTypeName ti.token

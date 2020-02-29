@@ -624,7 +624,9 @@ let viewAST ~(vs : ViewUtils.viewState) (ast : ast) : Types.msg Html.html list =
 
 let viewStatus (m : model) (ast : ast) : Types.msg Html.html =
   let s = m.fluidState in
-  let tokens = Printer.tokensForSplit ~index:s.activeEditorPanelIdx ast in
+  let tokens =
+    Printer.tokensForSplit s.settings ~index:s.activeEditorPanelIdx ast
+  in
   let ddText txt = Html.dd [] [Html.text txt] in
   let dtText txt = Html.dt [] [Html.text txt] in
   let posData =

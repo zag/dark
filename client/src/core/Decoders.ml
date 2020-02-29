@@ -457,17 +457,19 @@ and savedUserSettings (j : Js.Json.t) : savedUserSettings =
         j }
 
 
+and editorSettings (j : Js.Json.t) : editorSettings =
+  let d = Defaults.defaultEditorSettings in
+  { runTimers = withDefault d.runTimers (field "runTimers" bool) j
+  ; showFluidDebugger =
+      withDefault d.showFluidDebugger (field "showFluidDebugger" bool) j
+  ; indentSize = withDefault d.indentSize (field "indentSize" int) j
+  ; maxLineLength = withDefault d.maxLineLength (field "maxLineLength" int) j }
+
+
 and savedSettings (j : Js.Json.t) : savedSettings =
   (* always use withDefault or optional because the field might be missing due
    * to old editors or new fields. *)
-  { editorSettings =
-      { runTimers =
-          withDefault true (field "editorSettings" (field "runTimers" bool)) j
-      ; showFluidDebugger =
-          withDefault
-            false
-            (field "editorSettings" (field "showFluidDebugger" bool))
-            j }
+  { editorSettings = field "editorSettings" editorSettings j
   ; cursorState = withDefault Deselected (field "cursorState" cursorState) j
   ; routingTableOpenDetails =
       withDefault StrSet.empty (field "routingTableOpenDetails" strSet) j

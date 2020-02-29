@@ -1040,7 +1040,9 @@ and apiError =
 (* Editor settings are global settings on the editor. Initially, these are only things that admins use for debugging - in the future they could be extended to editor settings *)
 and editorSettings =
   { showFluidDebugger : bool
-  ; runTimers : bool }
+  ; runTimers : bool
+  ; indentSize : int
+  ; maxLineLength : int }
 
 (* tlidSelectTarget represents a target inside a TLID for use
    by the `Select` modification.
@@ -1542,6 +1544,12 @@ and fluidCommandState =
   ; location : (tlid * id) option
   ; filter : string option }
 
+and fluidSettings =
+  { indentSize : int
+  ; maxLineLength : int
+  ; maxElementLength : (* prevents individual elements getting too long *)
+                       int }
+
 and fluidState =
   { error : string option
   ; actions : string list
@@ -1570,7 +1578,8 @@ and fluidState =
        * multiple. This is used to place the caret correctly and modify the
        * correct set of tokens. idx=0 is always the "main" editor and should
        * always exist. *)
-      int }
+      int
+  ; settings : fluidSettings }
 
 (* Avatars *)
 and avatar =

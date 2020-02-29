@@ -20,8 +20,15 @@ let unsetCSRF : string = "UNSET_CSRF"
 
 let defaultUserSettings : savedUserSettings = {showUserWelcomeModal = true}
 
+let defaultEditorSettings =
+  { showFluidDebugger = false
+  ; runTimers = true
+  ; maxLineLength = 120
+  ; indentSize = 2 }
+
+
 let defaultSavedSettings : savedSettings =
-  { editorSettings = {runTimers = true; showFluidDebugger = false}
+  { editorSettings = defaultEditorSettings
   ; cursorState = Deselected
   ; routingTableOpenDetails = StrSet.empty
   ; tlTraceIDs = TLIDDict.empty
@@ -31,6 +38,10 @@ let defaultSavedSettings : savedSettings =
   ; lastReload = None
   ; sidebarOpen = true
   ; showTopbar = false }
+
+
+let defaultFluidSettings =
+  {indentSize = 2; maxLineLength = 120; maxElementLength = 60}
 
 
 let defaultFluidState : fluidState =
@@ -57,7 +68,8 @@ let defaultFluidState : fluidState =
   ; selectionStart = None
   ; errorDvSrc = SourceNone
   ; midClick = false
-  ; activeEditorPanelIdx = 0 }
+  ; activeEditorPanelIdx = 0
+  ; settings = defaultFluidSettings }
 
 
 let defaultCanvasProps : canvasProps =
@@ -159,7 +171,7 @@ let defaultModel : model =
   ; account = defaultAccount
   ; worker_schedules = StrDict.empty
   ; searchCache = TLIDDict.empty
-  ; editorSettings = {showFluidDebugger = false; runTimers = true}
+  ; editorSettings = defaultEditorSettings
   ; teaDebuggerEnabled = false
   ; unsupportedBrowser = false
   ; tlMenus = TLIDDict.empty
