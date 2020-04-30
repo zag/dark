@@ -7,56 +7,43 @@ module RTT = Types.RuntimeT
 open Libcommon
 open Types
 open RTT.HandlerT
+module FluidExpression = Libshared.FluidExpression
 
 let flatmap ~(f : 'a -> 'b list) : 'a list -> 'b list =
   List.fold ~init:[] ~f:(fun acc e -> f e @ acc)
 
 
-let rec fnnames_of_expr (expr : RTT.expr) : RTT.fnname list =
+(*
+let rec strings_of_expr (expr : RTT.expr) : string list =
   match expr with
   | Partial _ | Blank _ ->
       []
   | Filled (_, nexpr) ->
     ( match nexpr with
-    | If (expr1, expr2, expr3) ->
-        [expr1; expr2; expr3] |> flatmap ~f:fnnames_of_expr
-    | Thread exprs ->
-        exprs |> List.fold ~init:[] ~f:(fun acc e -> acc @ fnnames_of_expr e)
-    | FnCall (fnname, exprs) ->
-        fnname :: (exprs |> flatmap ~f:fnnames_of_expr)
-    | Variable _ ->
-        []
-    | Let (_, expr1, expr2) ->
-        [expr1; expr2] |> flatmap ~f:fnnames_of_expr
-    | Lambda (_, expr) ->
-        fnnames_of_expr expr
-    | Value _ ->
-        []
-    | FieldAccess (expr, _) ->
-        fnnames_of_expr expr
-    | ObjectLiteral pairs ->
-        pairs
-        |> List.map ~f:(fun (key, expr) -> expr)
-        |> flatmap ~f:fnnames_of_expr
-    | ListLiteral exprs ->
-        exprs |> flatmap ~f:fnnames_of_expr
-    | FeatureFlag (_, expr1, expr2, expr3) ->
-        [expr1; expr2; expr3] |> flatmap ~f:fnnames_of_expr
-    | FnCallSendToRail (fnname, exprs) ->
-        fnname :: (exprs |> flatmap ~f:fnnames_of_expr)
-    | Match (expr, matches) ->
-        fnnames_of_expr expr
-        @ ( matches
-          |> List.map ~f:(fun (pattern, expr) -> expr)
-          |> flatmap ~f:fnnames_of_expr )
-    | Constructor (_, exprs) ->
-        exprs |> flatmap ~f:fnnames_of_expr
-    | FluidPartial (_, expr) ->
-        fnnames_of_expr expr
-    | FluidRightPartial (_, expr) ->
-        fnnames_of_expr expr
-    | FluidLeftPartial (_, expr) ->
-        fnnames_of_expr expr )
+    | Value v ->
+      ( match Dval.parse_literal v with
+      | Some (DStr str) ->
+          [Unicode_string.to_string str]
+      | _ ->
+          [] )
+    | _ ->
+        [] )
+   *)
+
+let strings_of_expr (expr : RTT.expr) : string list =
+  let fluidExpr : FluidExpression.t = Fluid.toFluidExpr expr in
+  let strings = ref [] in
+  let processor fe =
+    ( match fe with
+    | FluidExpression.EString (_, str) ->
+        strings := str :: !strings
+    | _ ->
+        () ) ;
+    fe
+  in
+  fluidExpr |> FluidExpression.postTraversal ~f:processor |> ignore ;
+  !strings |> List.iter ~f:Caml.print_endline ;
+  !strings
 
 
 let usage () =
@@ -72,20 +59,13 @@ let prompt str =
   match In_channel.input_line In_channel.stdin with None -> "" | Some s -> s
 
 
-type fn =
+type mumble =
   { host : string
   ; handler : string
   ; tlid : string
-  ; fnname : RTT.fnname }
+  ; str : string }
 
-let pairs_of_fn (fn : fn) : (string * string) list =
-  [ ("host", fn.host)
-  ; ("handler", fn.handler)
-  ; ("tlid", fn.tlid)
-  ; ("fnname", fn.fnname) ]
-
-
-let process_canvas (canvas : RTT.expr Canvas.canvas ref) : fn list =
+let process_canvas (canvas : RTT.expr Canvas.canvas ref) : mumble list =
   let handler_name (handler : RuntimeT.expr handler) =
     let spec = handler.spec in
     String.concat
@@ -102,12 +82,12 @@ let process_canvas (canvas : RTT.expr Canvas.canvas ref) : fn list =
   handlers
   |> List.fold ~init:[] ~f:(fun acc handler ->
          acc
-         @ ( fnnames_of_expr handler.ast
-           |> List.map ~f:(fun fnname ->
+         @ ( strings_of_expr handler.ast
+           |> List.map ~f:(fun str ->
                   { host = !canvas.host
                   ; handler = handler_name handler
                   ; tlid = Types.string_of_id handler.tlid
-                  ; fnname }) ))
+                  ; str }) ))
 
 
 (*
@@ -117,55 +97,32 @@ let () =
   ()
   *)
 
-let filterFnsNotInStaticFns (fn : fn) =
-  let (realfn : RuntimeT.expr RuntimeT.fn option) =
-    Libs.FnMap.find !Libs.static_fns fn.fnname
-  in
-  match realfn with Some _ -> false | None -> true
-
-
-let isDeprecated (fn : fn) =
-  let (realfn : RuntimeT.expr RuntimeT.fn option) =
-    Libs.FnMap.find !Libs.static_fns fn.fnname
-  in
-  match realfn with Some realfn -> realfn.deprecated | None -> false
-
-
-let filterFunction _ = true
-
 let () =
-  let fnNames =
-    match Array.to_list Sys.argv with _ :: fnNames -> fnNames | [] -> usage ()
-  in
-  if List.is_empty fnNames then usage () else Libs.init [] ;
-  ignore
-    (let hosts = Serialize.current_hosts () in
-     hosts
-     |> List.map ~f:(fun host ->
-            let canvas =
-              try
-                Some
-                  ( Canvas.load_all host []
-                  |> Result.map_error ~f:(String.concat ~sep:", ")
-                  |> Prelude.Result.ok_or_internal_exception "Canvas load error"
-                  )
-              with
-              | Pageable.PageableExn e ->
-                  Log.erroR
-                    "Can't load canvas"
-                    ~params:[("host", host); ("exn", Exception.exn_to_string e)] ;
-                  None
-              | Exception.DarkException _ as e ->
-                  Log.erroR
-                    "DarkException"
-                    ~params:[("host", host); ("exn", Exception.exn_to_string e)] ;
-                  None
-            in
-            canvas
-            |> Option.map ~f:process_canvas
-            |> Option.value ~default:[]
-            |> List.filter ~f:(fun fn ->
-                   List.mem ~equal:( = ) fnNames fn.fnname)
-            |> List.map ~f:(fun fn ->
-                   Log.infO "function" ~params:(pairs_of_fn fn)))) ;
+  (let hosts = Serialize.current_hosts () in
+   hosts
+   |> List.map ~f:(fun host ->
+          let canvas =
+            try
+              Some
+                ( Canvas.load_all host []
+                |> Result.map_error ~f:(String.concat ~sep:", ")
+                |> Prelude.Result.ok_or_internal_exception "Canvas load error"
+                )
+            with
+            | Pageable.PageableExn e ->
+                Log.erroR
+                  "Can't load canvas"
+                  ~params:[("host", host); ("exn", Exception.exn_to_string e)] ;
+                None
+            | Exception.DarkException _ as e ->
+                Log.erroR
+                  "DarkException"
+                  ~params:[("host", host); ("exn", Exception.exn_to_string e)] ;
+                None
+          in
+          canvas
+          |> Option.map ~f:process_canvas
+          |> Option.value ~default:[]
+          |> List.filter ~f:(fun _ -> true)))
+  |> ignore ;
   ()
