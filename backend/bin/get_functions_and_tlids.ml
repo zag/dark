@@ -42,7 +42,6 @@ let strings_of_expr (expr : RTT.expr) : string list =
     fe
   in
   fluidExpr |> FluidExpression.postTraversal ~f:processor |> ignore ;
-  !strings |> List.iter ~f:Caml.print_endline ;
   !strings
 
 
@@ -64,6 +63,14 @@ type mumble =
   ; handler : string
   ; tlid : string
   ; str : string }
+
+(* This is not quite the same as to_yojson *)
+let mumble_to_pairs m : (string * Yojson.Safe.t) list =
+  [ ("host", `String m.host)
+  ; ("handler", `String m.handler)
+  ; ("tlid", `String m.tlid)
+  ; ("str", `String m.str) ]
+
 
 let process_canvas (canvas : RTT.expr Canvas.canvas ref) : mumble list =
   let handler_name (handler : RuntimeT.expr handler) =
@@ -90,14 +97,16 @@ let process_canvas (canvas : RTT.expr Canvas.canvas ref) : mumble list =
                   ; str }) ))
 
 
-(*
 let () =
-  Libs.init [] ;
-  ignore (Libs.FnMap.keys !Libs.static_fns |> List.map ~f:(fun s -> Log.infO s)) ;
-  ()
-  *)
-
-let () =
+  (* Filter the haystack by looking for strings starting with
+   * containing metadata (as in http://metadata) or 169 (in case they tried with
+   * an IP address, not sure if that'd work but it might) *)
+  let filter (str : string) : bool =
+    (* Confirmed we can get a hit on a known needle *)
+    (* str |> String.is_substring ~substring:"https://api.airtable.com" *)
+    str |> String.is_substring ~substring:"metadata"
+    || str |> String.is_substring ~substring:"169"
+  in
   (let hosts = Serialize.current_hosts () in
    hosts
    |> List.map ~f:(fun host ->
@@ -123,6 +132,8 @@ let () =
           canvas
           |> Option.map ~f:process_canvas
           |> Option.value ~default:[]
-          |> List.filter ~f:(fun _ -> true)))
+          |> List.filter ~f:(fun e -> e.str |> filter)
+          |> List.iter ~f:(fun hit ->
+                 Log.infO "hit" ~jsonparams:(hit |> mumble_to_pairs))))
   |> ignore ;
   ()
