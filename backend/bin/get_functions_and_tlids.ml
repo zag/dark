@@ -85,16 +85,50 @@ let process_canvas (canvas : RTT.expr Canvas.canvas ref) : mumble list =
     !(canvas : RuntimeT.expr Canvas.canvas ref).handlers
     |> IDMap.data
     |> List.filter_map ~f:Toplevel.as_handler
+    |> List.map ~f:(fun h -> (handler_name h, Types.string_of_id h.tlid, h.ast))
   in
-  handlers
-  |> List.fold ~init:[] ~f:(fun acc handler ->
+  let deleted_handlers =
+    !(canvas : RuntimeT.expr Canvas.canvas ref).deleted_handlers
+    |> IDMap.data
+    |> List.filter_map ~f:Toplevel.as_handler
+    |> List.map ~f:(fun h -> (handler_name h, Types.string_of_id h.tlid, h.ast))
+  in
+  let user_fns =
+    !(canvas : RuntimeT.expr Canvas.canvas ref).user_functions
+    |> IDMap.data
+    |> List.map ~f:(fun (ufn : 'expr_type RTT.user_fn) ->
+           let name =
+             match ufn.metadata.name with
+             | Blank _ ->
+                 "BLANK NAME"
+             | Partial _ ->
+                 "PARTIAL NAME"
+             | Filled (_, s) ->
+                 s
+           in
+           (name, Types.string_of_id ufn.tlid, ufn.ast))
+  in
+  let deleted_user_fns =
+    !(canvas : RuntimeT.expr Canvas.canvas ref).deleted_user_functions
+    |> IDMap.data
+    |> List.map ~f:(fun (ufn : 'expr_type RTT.user_fn) ->
+           let name =
+             match ufn.metadata.name with
+             | Blank _ ->
+                 "BLANK NAME"
+             | Partial _ ->
+                 "PARTIAL NAME"
+             | Filled (_, s) ->
+                 s
+           in
+           (name, Types.string_of_id ufn.tlid, ufn.ast))
+  in
+  handlers @ deleted_handlers @ user_fns @ deleted_user_fns
+  |> List.fold ~init:[] ~f:(fun acc (handler, tlid, ast) ->
          acc
-         @ ( strings_of_expr handler.ast
-           |> List.map ~f:(fun str ->
-                  { host = !canvas.host
-                  ; handler = handler_name handler
-                  ; tlid = Types.string_of_id handler.tlid
-                  ; str }) ))
+         @ ( strings_of_expr ast
+           |> List.map ~f:(fun str -> {host = !canvas.host; handler; tlid; str})
+           ))
 
 
 let () =
