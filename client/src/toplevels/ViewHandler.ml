@@ -91,7 +91,9 @@ let triggerHandlerButton (vp : viewProps) (spec : handlerSpec) : msg Html.html =
       Vdom.noNode
 
 
-let externalLink (vp : viewProps) (name : string) =
+(** [externalLinkUsingTrace vp handlerRoute] returns a canvas-specific builtwithdark URL
+* for the request issued in the selected trace in [vp], falling back to [handlerRoute] if no selected trace exists. *)
+let externalLinkUsingTrace (vp : viewProps) (handlerRoute : string) =
   let urlPath =
     let currentTraceData =
       Analysis.selectedTraceID vp.tlTraceIDs vp.traces vp.tlid
@@ -101,11 +103,21 @@ let externalLink (vp : viewProps) (name : string) =
     in
     match currentTraceData with
     | Some data ->
-        Runtime.pathFromInputVars data.input |> Option.withDefault ~default:name
+        Runtime.pathFromInputVars data.input
+        |> Option.withDefault ~default:handlerRoute
     | None ->
-        name
+        handlerRoute
   in
   "//" ^ Tea.Http.encodeUri vp.canvasName ^ "." ^ vp.userContentHost ^ urlPath
+
+
+(* [externalLinkForRoute vp handlerRoute] returns a canvas-specific builtwithdark URL for the given [handlerRoute] *)
+let externalLinkForRoute (vp : viewProps) (handlerRoute : string) =
+  "//"
+  ^ Tea.Http.encodeUri vp.canvasName
+  ^ "."
+  ^ vp.userContentHost
+  ^ handlerRoute
 
 
 let viewMenu (vp : viewProps) (spec : handlerSpec) : msg Html.html =
@@ -130,10 +142,10 @@ let viewMenu (vp : viewProps) (spec : handlerSpec) : msg Html.html =
         let httpActions = [curlAction; commonAction] in
         if meth = "GET"
         then
-          let url = externalLink vp name in
+          let url = externalLinkForRoute vp name in
           let newTabAction : TLMenu.menuItem =
             { title = "Open in new tab"
-            ; key = "new-tab-"
+            ; key = "new-tab-" ^ url
             ; icon = Some "external-link-alt"
             ; action = (fun _ -> NewTabFromTLMenu (url, tlid))
             ; disableMsg = None }
