@@ -184,9 +184,7 @@ let should_use_https uri =
   (* ACD-should_use_https-MARKER *)
   | ["chat"; "lee"; "af"]
   | ["scraper-proxy"; "galactic"; "zone"]
-  | ["hellobirb"; "com"]
   | ["www"; "hellobirb"; "com"]
-  | ["kiksht"; "com"]
   | ["www"; "kiksht"; "com"]
   | ["food"; "placeofthin"; "gs"] ->
       true
@@ -2026,17 +2024,14 @@ let route_host req =
   | ["builtwithdark"; "lvh"; "me"]
   | ["builtwithdark"; "com"] ->
       Some (Canvas "builtwithdark")
-  (* Customers - do not remove the marker below *)
   (* ACD-route_host-MARKER *)
   | ["chat"; "lee"; "af"] ->
       Some (Canvas "lee-roulette")
   | ["scraper-proxy"; "galactic"; "zone"] ->
       Some (Canvas "danielsokil-scraper-proxy")
-  | [a; "dabblefox"; "com"] ->
-      Some (Canvas ("dabblefox-" ^ a))
-  | ["www"; "hellobirb"; "com"] | ["hellobirb"; "com"] ->
+  | ["www"; "hellobirb"; "com"] ->
       Some (Canvas "pixelkeet")
-  | ["www"; "kiksht"; "com"] | ["kiksht"; "com"] ->
+  | ["www"; "kiksht"; "com"] ->
       Some (Canvas "alex")
   | ["food"; "placeofthin"; "gs"] ->
       Some (Canvas "scottriley-trellomap")
