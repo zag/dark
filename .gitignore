@@ -17,13 +17,11 @@ _esy/
 /backend/static/
 
 # F#
-fsharp-backend/.fake/
 fsharp-backend/deploy/
-fsharp-backend/packages/
 fsharp-backend/paket-files/
-fsharp-backend/node_modules/
+fsharp-backend/.paket/load
 fsharp-backend/Build/
-# Unclear why these appear
+# These are from vscode
 fsharp-backend/src/*/obj
 fsharp-backend/tests/*/obj
 
