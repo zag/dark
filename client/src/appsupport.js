@@ -500,7 +500,24 @@ setTimeout(function () {
   let rollbarConfigSetup =
     "const rollbarConfig = '" + JSON.stringify(rollbarConfig) + "';\n\n";
   let buildHashSetup = "const buildHash = '" + buildHash + "';\n\n";
-
+  let loadFsharpWasm = true;
+  if (loadFsharpWasm) {
+    let fsharpAnalysisWasm = fetcher("/analysis-wasm.js");
+    let fsharpAnalysisWrapperWasm = fetcher("/fsharpanalysiswrapper.js");
+    (async function () {
+      var strings = [
+        rollbarConfigSetup,
+        buildHashSetup,
+        await fsharpAnalysisWasm,
+        "\n\n",
+        await fsharpAnalysisWrapperWasm,
+      ];
+      var fsharpAnalysisWorkerUrl = window.URL.createObjectURL(
+        new Blob(strings),
+      );
+      window.fsharpAnalysisWorker = new Worker(fsharpAnalysisWorkerUrl);
+    })();
+  }
   let analysisjs = fetcher("/analysis.js");
   let analysiswrapperjs = fetcher("/analysiswrapper.js");
   let fetcherjs = fetcher("/fetcher.js");
