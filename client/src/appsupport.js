@@ -502,12 +502,15 @@ setTimeout(function () {
   let buildHashSetup = "const buildHash = '" + buildHash + "';\n\n";
   let loadFsharpWasm = true;
   if (loadFsharpWasm) {
-    let fsharpAnalysisWasm = fetcher("/analysis-wasm.js");
+    let fsharpAnalysisWasm = fetcher("/_framework/blazor.webassembly.js");
     let fsharpAnalysisWrapperWasm = fetcher("/fsharpanalysiswrapper.js");
     (async function () {
+      // https://github.com/dotnet/aspnetcore/issues/15993#issue-512930690
       var strings = [
         rollbarConfigSetup,
         buildHashSetup,
+        "\nvar window = self;\n",
+        "\nvar document = { getElementsByTagName: () => [] };\n",
         await fsharpAnalysisWasm,
         "\n\n",
         await fsharpAnalysisWrapperWasm,
